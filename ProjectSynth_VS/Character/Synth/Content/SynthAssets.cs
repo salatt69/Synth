@@ -1,0 +1,420 @@
+﻿using ProjectSynth.Components;
+using ProjectSynth.Modules;
+using ProjectSynth.States.Synth.Diva;
+using R2API;
+using RoR2;
+using RoR2.Projectile;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+
+namespace ProjectSynth.Character.Synth.Content
+{
+    public static class SynthAssets
+    {
+        private static AssetBundle _ab;
+
+        public static CharacterCameraParams ccpMikuBeam;
+
+        public static GameObject mdlSynth;
+
+        // particle effects
+        public static GameObject vfx_stunningPerformanceDistortion; // TODO:
+        public static GameObject vfx_stunningPerformanceShock; // TODO:
+        public static GameObject vfx_cultureShock;
+        public static GameObject vfx_divaExplosion; // TODO:
+        public static GameObject vfx_encoreExplosion; // TODO:
+        public static GameObject vfx_mikuBeamEffect; // TODO:
+        public static GameObject vfx_tnmMuzzleFlash; // TODO:
+
+        // projectiles
+        public static GameObject proj_ThirtyNineMusic; // TODO:
+        public static GameObject proj_ThirtyNineMusicAlt; // TODO:
+        public static GameObject proj_Diva; // TODO:
+
+        // UI
+        public static GameObject synthCrosshair; // TODO:
+        public static GameObject synthMetroOverlay; // TODO:
+        public static GameObject synthRushOverlay; // TODO:
+        public static GameObject divaIndicator;
+        public static GameObject divaIndicatorFocused;
+
+        // Pod
+        public static GameObject synthSurvivorPod; // TODO:
+
+        // textures
+        public static Sprite tex_icon_Metro; // TODO:
+        public static Sprite tex_icon_ThirtyNineMusic; // TODO:
+        public static Sprite tex_icon_Diva; // TODO:
+        public static Sprite tex_icon_RollingGirl; // TODO:
+        public static Sprite tex_icon_MikuBeam; // TODO:
+        public static Sprite tex_icon_LeapToDiva; // TODO:
+        public static Sprite tex_icon_Backflip; // TODO:
+        public static Sprite tex_icon_GroundSlam; // TODO:
+
+        public static Sprite tex_icon_EncoreBuff; // TODO:
+        public static Sprite tex_icon_WeakEndBuff; // TODO:
+        public static Sprite tex_icon_PumpedUpBuff; // TODO:
+
+        public static Texture tex_synthPortrait; // TODO:
+
+        public static Texture tex_encoreBars;
+        public static Texture tex_RampEncoreSphere;
+
+        public static Texture tex_RampDivaSphereMain;
+        public static Texture tex_RampDivaSphereVoid;
+
+        public static Texture tex_RampStunningPerformanceMain;
+
+        public static Texture tex_RampEncoreGlitter; // TODO:
+
+        // materials
+        public static Material mat_StandartHopoo;
+
+        public static Material mat_SynthBody; // TODO:
+        public static Material mat_SynthScreen; // TODO:
+
+        public static Material mat_DivaBlink;
+        public static Material mat_DivaSphere;
+        public static Material mat_DivaTrailLine;
+        public static Material mat_DivaTrailParticles;
+
+        public static Material mat_SoundWave; // TODO:
+
+        public static Material mat_cultureShockOverlayMain; // TODO:
+        public static Material mat_mikuStun;
+        public static Material mat_eighthNote;
+
+        public static Material mat_DivaStunningPerformaceSphere;
+
+        public static Material mat_encoreGlitter;
+        public static Material mat_encoreSphere;
+
+        public static Material mat_TNMRegularOverlay;
+        public static Material mat_TNMRound;
+
+        public static Material mat_PumpedUpOverlayEffectMaterial;
+
+        public static void Init(AssetBundle assetBundle)
+        {
+            _ab = assetBundle;
+
+            Sounds.CreateSoundEvents();
+
+            CreateCrosshairAndOverlay();
+
+            RegisterTextures();
+            RegisterMisc();
+
+            CreateMaterials();
+
+            CreateEffects();
+            CreateProjectiles();
+        }
+
+        private static void CreateCrosshairAndOverlay()
+        {
+            synthCrosshair = _ab.LoadAsset<GameObject>("SynthCrosshair");
+
+            synthMetroOverlay = _ab.LoadAsset<GameObject>("MetroOverlay");
+            synthMetroOverlay.AddComponent<SynthOverlayController>();
+
+            synthRushOverlay = _ab.LoadAsset<GameObject>("RushOverlay");
+        }
+
+        private static void RegisterTextures()
+        {
+            tex_icon_Metro = _ab.LoadAsset<Sprite>("texSynthMetro");
+            tex_icon_ThirtyNineMusic = _ab.LoadAsset<Sprite>("texSynthTNM");
+            tex_icon_Diva = _ab.LoadAsset<Sprite>("texSynthDiva");
+            tex_icon_RollingGirl = _ab.LoadAsset<Sprite>("texSynthRollingGirl");
+            tex_icon_MikuBeam = _ab.LoadAsset<Sprite>("texSynthMikuBeam");
+            tex_icon_LeapToDiva = _ab.LoadAsset<Sprite>("texSynthLeapToDiva");
+            tex_icon_Backflip = _ab.LoadAsset<Sprite>("texSynthBackflip");
+            tex_icon_GroundSlam = _ab.LoadAsset<Sprite>("texSynthGroundSlam");
+
+            tex_synthPortrait = _ab.LoadAsset<Texture>("texHenryIcon");
+            tex_icon_EncoreBuff = Addressables.LoadAssetAsync<Sprite>("RoR2/DLC3/Items/SharedSuffering/texSharedSufferingDebuffIcon.png").WaitForCompletion();
+            tex_icon_WeakEndBuff = Addressables.LoadAssetAsync<Sprite>("RoR2/DLC2/Items/TeleportOnLowHealth/texBuffTeleportOnLowHealthIcon.png").WaitForCompletion();
+            tex_icon_PumpedUpBuff = Addressables.LoadAssetAsync<Sprite>("RoR2/Base/Common/MiscIcons/texDroneIconOutlined.png").WaitForCompletion();
+
+            tex_encoreBars = _ab.LoadAsset<Texture>("texEncoreBars");
+            tex_RampEncoreSphere = _ab.LoadAsset<Texture>("texRampEncoreSphere");
+
+            tex_RampDivaSphereMain = _ab.LoadAsset<Texture>("texRampDivaSphereMain");
+            tex_RampDivaSphereVoid = _ab.LoadAsset<Texture>("texRampDivaSphereVoid");
+
+            tex_RampStunningPerformanceMain = _ab.LoadAsset<Texture>("texRampStunningPerformance");
+        }
+
+        private static void RegisterMisc()
+        {
+            synthSurvivorPod = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/VoidSurvivor/VoidSurvivorPod.prefab").WaitForCompletion();
+
+            //divaIndicator = _ab.LoadAsset<GameObject>("DivaIndicator");
+            //divaIndicatorFocused = _ab.LoadAsset<GameObject>("DivaIndicatorFocused");
+            //var raa = divaIndicatorFocused.transform.Find("BaseContainer").gameObject.AddComponent<RotateAroundAxis>();
+            //raa.SetSpeed(RotateAroundAxis.Speed.Fast);
+            //raa.SetSpeed(64);
+
+            ccpMikuBeam = ScriptableObject.CreateInstance<CharacterCameraParams>();
+            ccpMikuBeam.name = "ccpMikuBeam";
+            ccpMikuBeam.data.minPitch = -70;
+            ccpMikuBeam.data.maxPitch = 50;
+            ccpMikuBeam.data.wallCushion = 0.1f;
+            ccpMikuBeam.data.pivotVerticalOffset = 2f;
+            ccpMikuBeam.data.idealLocalCameraPos = new Vector3(2, -2.5f, -2f);
+            ccpMikuBeam.data.fov = 75f;
+        }
+
+        private static void CreateMaterials()
+        {
+            mat_StandartHopoo = _ab.LoadAsset<Material>("matStandartHopoo").ConvertStubbedShaderToHopoo_Standart();
+
+            mat_SynthBody = _ab.LoadAsset<Material>("matSynthBody").ConvertStubbedShaderToHopoo_Standart();
+            mat_SynthScreen = _ab.LoadAsset<Material>("matSynthScreen").ConvertStubbedShaderToHopoo_Standart();
+            mdlSynth = _ab.LoadAsset<GameObject>("mdlSynth");
+
+            mat_DivaBlink = _ab.LoadAsset<Material>("matDivaBlink").ConvertStubbedShaderToHopoo_CloudRemap();
+            mat_DivaSphere = _ab.LoadAsset<Material>("matDivaSphere").ConvertStubbedShaderToHopoo_Intersection();
+            mat_DivaTrailLine = _ab.LoadAsset<Material>("matDivaTrailLine").ConvertStubbedShaderToHopoo_CloudRemap();
+            mat_DivaTrailParticles = _ab.LoadAsset<Material>("matDivaTrailParicles").ConvertStubbedShaderToHopoo_CloudRemap();
+            mat_DivaStunningPerformaceSphere = _ab.LoadAsset<Material>("matDivaStunningPerformanceSphere").ConvertStubbedShaderToHopoo_Intersection();
+
+            mat_SoundWave = _ab.LoadAsset<Material>("matSoundWave").ConvertStubbedShaderToHopoo_CloudRemap();
+
+            mat_cultureShockOverlayMain = Addressables.LoadAssetAsync<Material>("RoR2/Base/Common/matIsShocked.mat").WaitForCompletion();
+
+            mat_mikuStun = _ab.LoadAsset<Material>("matDivaMikuStun").ConvertStubbedShaderToHopoo_OpaqueCloudRemap();
+            mat_eighthNote = _ab.LoadAsset<Material>("matDivaEighthNote").ConvertStubbedShaderToHopoo_OpaqueCloudRemap();
+
+            mat_encoreGlitter = _ab.LoadAsset<Material>("matEncoreGlitter").ConvertStubbedShaderToHopoo_CloudRemap();
+            mat_encoreSphere = _ab.LoadAsset<Material>("matEncoreSphere").ConvertStubbedShaderToHopoo_Intersection();
+
+            mat_TNMRegularOverlay = _ab.LoadAsset<Material>("matTNMRegularOverlay").ConvertStubbedShaderToHopoo_CloudRemap();
+            mat_TNMRound = _ab.LoadAsset<Material>("matTNMRound").ConvertStubbedShaderToHopoo_OpaqueCloudRemap();
+
+            mat_PumpedUpOverlayEffectMaterial = _ab.LoadAsset<Material>("matPumpedUpOverlayEffectMaterial");
+        }
+
+        private static void CreateEffects()
+        {
+            Effect_StunningPerformance();
+            Effect_DivaExplosion();
+            Effect_MikuBeam();
+            Effect_CultureShock();
+            Effect_EncoreExplosion();
+
+            MuzzleFlash_ThirtyNineMusic();
+        }
+
+        private static void CreateProjectiles()
+        {
+            Projectile_ThirtyNineMusic();
+
+            Projectile_Diva();
+        }
+
+        private static void Effect_StunningPerformance()
+        {
+            vfx_stunningPerformanceDistortion = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC3/Drone Tech/DroneHeadbuttImpact.prefab").WaitForCompletion();
+
+            vfx_stunningPerformanceShock = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Captain/CaptainTazerSupplyDropNova.prefab").WaitForCompletion();
+            vfx_stunningPerformanceShock.transform.Find("Nova Sphere").GetComponent<ParticleSystemRenderer>().material = mat_DivaStunningPerformaceSphere;
+        }
+
+        private static void Effect_DivaExplosion()
+        {
+            vfx_divaExplosion = Addressables.LoadAssetAsync<GameObject>("RoR2/Junk/Mage/MageLightningBombExplosion.prefab").WaitForCompletion();
+        }
+
+        private static void Effect_MikuBeam()
+        {
+            vfx_mikuBeamEffect = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/VoidSurvivor/VoidSurvivorBeamCorrupt.prefab").WaitForCompletion();
+        }
+
+        private static void Effect_CultureShock()
+        {
+            vfx_cultureShock = _ab.LoadAsset<GameObject>("CultureShock");
+            var cshock_psDration = vfx_cultureShock.AddComponent<ScaleParticleSystemDuration>();
+            cshock_psDration.initialDuration = 2f;
+            cshock_psDration.particleSystems = vfx_cultureShock.GetComponentsInChildren<ParticleSystem>();
+
+            var cshock_vfxAttributes = vfx_cultureShock.AddComponent<VFXAttributes>();
+            cshock_vfxAttributes.vfxPriority = VFXAttributes.VFXPriority.Always;
+            cshock_vfxAttributes.vfxIntensity = VFXAttributes.VFXIntensity.Low;
+
+            vfx_cultureShock.AddComponent<HoverOverHead>();
+            vfx_cultureShock.AddComponent<Rigidbody>().isKinematic = true;
+
+            vfx_cultureShock.transform.Find("Bonk").gameObject.AddComponent<HoverOverHead>();
+            ContentAddition.AddEffect(vfx_cultureShock);
+        }
+
+        private static void Effect_EncoreExplosion()
+        {
+            vfx_encoreExplosion = _ab.LoadAsset<GameObject>("EncoreExplosion");
+            var encoreExplosion_effectComponent = vfx_encoreExplosion.AddComponent<EffectComponent>();
+            encoreExplosion_effectComponent.soundName = "";
+            encoreExplosion_effectComponent.applyScale = true;
+
+            var encoreExplosion_vfxAttributes = vfx_encoreExplosion.AddComponent<VFXAttributes>();
+            encoreExplosion_vfxAttributes.vfxPriority = VFXAttributes.VFXPriority.Medium;
+            encoreExplosion_vfxAttributes.vfxIntensity = VFXAttributes.VFXIntensity.Low;
+
+            var encoreExplosion_particleEnd = vfx_encoreExplosion.AddComponent<DestroyOnParticleEnd>();
+            encoreExplosion_particleEnd.trackedParticleSystem = vfx_encoreExplosion.GetComponentInChildren<ParticleSystem>();
+            ContentAddition.AddEffect(vfx_encoreExplosion);
+        }
+
+        private static void MuzzleFlash_ThirtyNineMusic()
+        {
+            vfx_tnmMuzzleFlash = _ab.LoadAsset<GameObject>("SynthTNMMuzzleFlash");
+            var tnmMuzzleFlash_vfxAttributes = vfx_tnmMuzzleFlash.AddComponent<VFXAttributes>();
+            tnmMuzzleFlash_vfxAttributes.vfxPriority = VFXAttributes.VFXPriority.Medium;
+            tnmMuzzleFlash_vfxAttributes.vfxIntensity = VFXAttributes.VFXIntensity.Low;
+
+            var tnmMuzzleFlash_effectComponent = vfx_tnmMuzzleFlash.AddComponent<EffectComponent>();
+            tnmMuzzleFlash_effectComponent.soundName = "";
+            tnmMuzzleFlash_effectComponent.positionAtReferencedTransform = true;
+            tnmMuzzleFlash_effectComponent.parentToReferencedTransform = true;
+
+            var tnmMuzzleFlash_destroyOnTimer = vfx_tnmMuzzleFlash.AddComponent<DestroyOnTimer>();
+            tnmMuzzleFlash_destroyOnTimer.duration = 1.0f;
+            ContentAddition.AddEffect(vfx_tnmMuzzleFlash);
+        }
+
+        private static void Projectile_ThirtyNineMusic()
+        {
+            proj_ThirtyNineMusic = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Seeker/SpiritPunchProjectile.prefab")
+                .WaitForCompletion()?
+                .InstantiateClone("ThirtyNineMusicProjectile", true);
+            var tnm_simple = proj_ThirtyNineMusic.GetComponent<ProjectileSimple>();
+            tnm_simple.desiredForwardSpeed = 70f;
+            tnm_simple.lifetime = 2f;
+            tnm_simple.lifetimeExpiredEffect = null;
+
+            var tnm_damage = proj_ThirtyNineMusic.GetComponent<ProjectileDamage>();
+            tnm_damage.damageType = DamageType.Generic;
+
+            var tnm_hitBox = proj_ThirtyNineMusic.GetComponentInChildren<HitBox>();
+            tnm_hitBox.gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
+
+            var tnm_controller = proj_ThirtyNineMusic.GetComponent<ProjectileController>();
+            GameObject tnm_ghost = tnm_controller.ghostPrefab = _ab.LoadAsset<GameObject>("ThirtyNineMusicGhost")
+                .InstantiateClone("ThirtyNineMusicGhost", true);
+            var tnm_ghostController = tnm_ghost.AddComponent<ProjectileGhostController>();
+            tnm_ghostController.inheritScaleFromProjectile = true;
+            tnm_ghost.AddComponent<VFXAttributes>();
+
+            ContentAddition.AddProjectile(proj_ThirtyNineMusic);
+        }
+        private static void Projectile_Diva()
+        {
+            proj_Diva = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Engi/EngiMine.prefab")
+                .WaitForCompletion()?
+                .InstantiateClone("DivaProjectile", true);
+
+            proj_Diva.DestroyChild("Ring");
+            proj_Diva.DestroyChild("PrepEffect");
+            proj_Diva.DestroyChild("WeakIndicator");
+            proj_Diva.DestroyChild("StrongIndicator");
+
+            foreach (var comp in proj_Diva.GetComponents<MonoBehaviour>())
+            {
+                if (comp is ProjectileDeployToOwner
+                    || comp is ProjectileStickOnImpact
+                    || comp is EntityStateMachine
+                    )
+                {
+                    UnityEngine.Object.DestroyImmediate(comp);
+                }
+            }
+            // Deleting it explicitly here, because it is higher on the list of components than ProjectileDeployToOwner.
+            // But the requirement for deleting Deployable is to delete ProjectileDeployToOwner first.
+            // This is easiest way to ensure that the order of deletion is correct.
+            UnityEngine.Object.DestroyImmediate(proj_Diva.GetComponent<Deployable>());
+
+            var divaVisuals = _ab.LoadAsset<GameObject>("DivaVisuals").InstantiateClone("DivaVisuals", true);
+            Transform diva_sphere = divaVisuals.transform.Find("Hologram/Sphere");
+            Transform diva_blink = divaVisuals.transform.Find("Blink");
+
+            divaVisuals.transform.SetParent(proj_Diva.transform, false);
+
+            var diva_pulse = proj_Diva.AddComponent<ParticlePulseSync>();
+            diva_pulse.particleSystem = diva_blink.GetComponent<ParticleSystem>();
+
+            var diva_esm1 = proj_Diva.AddComponent<EntityStateMachine>();
+            diva_esm1.initialStateType = new EntityStates.SerializableEntityStateType(typeof(DivaArmingUnarmed));
+            diva_esm1.mainStateType = new EntityStates.SerializableEntityStateType(typeof(DivaArmingUnarmed));
+            diva_esm1.customName = "Arming";
+
+            var diva_esm2 = proj_Diva.AddComponent<EntityStateMachine>();
+            diva_esm2.initialStateType = new EntityStates.SerializableEntityStateType(typeof(WaitForStick));
+            diva_esm2.mainStateType = new EntityStates.SerializableEntityStateType(typeof(StunningPerformance));
+            diva_esm2.customName = "Main";
+
+            var diva_networkEsm = proj_Diva.GetComponent<NetworkStateMachine>();
+            diva_networkEsm.stateMachines = [diva_esm1, diva_esm2];
+
+            proj_Diva.AddComponent<DivaAnimator>();
+
+            var diva_stick = proj_Diva.AddComponent<ProjectileStickOnImpactByNormal>();
+            diva_stick.minGroundNormalY = 0.65f;
+            diva_stick.ignoreCharacters = true;
+            diva_stick.ignoreWorld = false;
+            diva_stick.alignNormals = true;
+
+            var diva_controller = proj_Diva.GetComponent<ProjectileController>();
+
+            var diva_target = proj_Diva.GetComponent<ProjectileSphereTargetFinder>();
+            diva_target.lookRange = 14f;
+            diva_sphere.localScale *= diva_target.lookRange * 2f;
+
+            var diva_lifetime = proj_Diva.AddComponent<DivaLifetime>();
+            diva_lifetime.flyingLifetime = 5f;
+            diva_lifetime.stuckLifetime = 10f;
+
+            var diva_ghost = _ab.LoadAsset<GameObject>("DivaGhost")?.InstantiateClone("DivaProjectileGhost", true);
+            diva_controller.ghostPrefab = diva_ghost;
+            diva_ghost.AddComponent<ProjectileGhostController>();
+            diva_ghost.AddComponent<VFXAttributes>().DoNotPool = true;
+
+            ContentAddition.AddProjectile(proj_Diva);
+        }
+    }
+
+    public static class Sounds
+    {
+        public static readonly string ThirtyNineMusicShot = "Play_synth_ThirtyNineMusic_shot";
+
+        // CultureShock
+        public static readonly string[] CultureShock =
+        {
+            "Play_CultureShockStart_1",
+            "Play_CultureShockStart_2",
+            "Play_CultureShockStart_3",
+            "Play_CultureShockStart_4",
+            "Play_CultureShockStart_5",
+            "Play_CultureShockStart_6",
+            "Play_CultureShockStart_7"
+        };
+
+        public static NetworkSoundEventDef thirtyNineMusicHitSoundEvent;
+
+        public static void CreateSoundEvents()
+        {
+            thirtyNineMusicHitSoundEvent = CreateSoundEvent(Sounds.ThirtyNineMusicShot);
+        }
+
+        private static NetworkSoundEventDef CreateSoundEvent(string eventName)
+        {
+            NetworkSoundEventDef networkSoundEventDef = ScriptableObject.CreateInstance<NetworkSoundEventDef>();
+            networkSoundEventDef.akId = AkSoundEngine.GetIDFromString(eventName);
+            networkSoundEventDef.eventName = eventName;
+
+            ContentAddition.AddNetworkSoundEventDef(networkSoundEventDef);
+
+            return networkSoundEventDef;
+        }
+    }
+}

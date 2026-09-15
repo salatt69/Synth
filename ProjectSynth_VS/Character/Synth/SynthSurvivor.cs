@@ -1,0 +1,260 @@
+﻿using ProjectSynth.Character.Synth.Content;
+using ProjectSynth.Components;
+using ProjectSynth.Mod;
+using ProjectSynth.Modules;
+using ProjectSynth.Modules.BaseContent.Characters;
+using ProjectSynth.States.Synth;
+using ProjectSynth.States.Synth.Metro;
+using RoR2;
+using RoR2.Skills;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace ProjectSynth.Character.Synth
+{
+    public class SynthSurvivor : SurvivorBase<SynthSurvivor>
+    {
+        public override string assetBundleName => SynthPlugin.MODNAME.ToLower() + "_bundle";
+        public override string bodyName => "SynthBody";
+        public override string masterName => "SynthMonsterMaster";
+        public override string modelPrefabName => "mdlSynth";
+        public override string displayPrefabName => "SynthDisplay";
+
+        public const string SYNTH_PREFIX = SynthPlugin.DEVELOPER_PREFIX + "_SYNTH_";
+
+        public override string survivorTokenPrefix => SYNTH_PREFIX;
+
+        public override BodyInfo bodyInfo => new()
+        {
+            bodyName = bodyName,
+            bodyNameToken = SYNTH_PREFIX + "NAME",
+            subtitleNameToken = SYNTH_PREFIX + "SUBTITLE",
+
+            characterPortrait = SynthAssets.tex_synthPortrait,
+            bodyColor = new Color(0.49f, 0.42f, 0.67f),
+            sortPosition = 100,
+
+            crosshair = SynthAssets.synthCrosshair,
+            podPrefab = SynthAssets.synthSurvivorPod,
+
+            maxHealth = 110f,
+            healthRegen = 1.5f,
+            armor = 0f,
+
+            jumpCount = 1,
+        };
+
+        public override CustomRendererInfo[] customRendererInfos =>
+        [
+        ];
+
+        public override UnlockableDef characterUnlockableDef => SynthUnlockables.characterUnlockableDef;
+
+        public override ItemDisplaysBase itemDisplays => new SynthItemDisplays();
+
+        public override AssetBundle assetBundle { get; protected set; }
+
+        public override GameObject bodyPrefab { get; protected set; }
+        public override CharacterBody prefabCharacterBody { get; protected set; }
+        public override GameObject characterModelObject { get; protected set; }
+        public override CharacterModel prefabCharacterModel { get; protected set; }
+        public override GameObject displayPrefab { get; protected set; }
+
+        public override void Initialize()
+        {
+            assetBundle = Asset.LoadAssetBundle(assetBundleName);
+            SynthAssets.Init(assetBundle);
+
+            base.Initialize();
+        }
+
+        public override void InitializeCharacter()
+        {
+            SynthUnlockables.Init();
+
+            base.InitializeCharacter();
+
+            SynthConfig.Init();
+            SynthStates.Init();
+            SynthTokens.Init();
+
+            SynthBuffs.Init();
+            SynthDamageTypes.Register();
+
+            SynthPassive.Initialize();
+
+            InitializeEntityStateMachines();
+            InitializeSkills();
+            InitializeSkins();
+            InitializeCharacterMaster();
+
+            AdditionalBodySetup();
+        }
+
+        private void AdditionalBodySetup()
+        {
+            AddHitboxes();
+            bodyPrefab.AddComponent<SynthSurvivorController>();
+            bodyPrefab.AddComponent<SynthMetroRuntime>();
+            bodyPrefab.AddComponent<CharacterCameraOverride>();
+            bodyPrefab.AddComponent<CharacterShaderOverlay>();
+        }
+
+        public void AddHitboxes()
+        {
+        }
+
+        public override void InitializeEntityStateMachines()
+        {
+            Prefabs.ClearEntityStateMachines(bodyPrefab);
+
+            Prefabs.AddMainEntityStateMachine(bodyPrefab, "Body", typeof(EntityStates.SpawnTeleporterState), typeof(SynthMain));
+
+            Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon");
+            Prefabs.AddEntityStateMachine(bodyPrefab, "PumpedUp");
+            Prefabs.AddEntityStateMachine(bodyPrefab, "Metro", typeof(MetroWaitForInputState), typeof(MetroWaitForInputState));
+        }
+
+        #region skills
+        public override void InitializeSkills()
+        {
+            Skills.ClearGenericSkills(bodyPrefab);
+
+            AddPassiveSkill();
+            AddPrimarySkills();
+            AddSecondarySkills();
+            AddUtilitySkills();
+            AddSpecialSkills();
+        }
+
+        private void AddPassiveSkill()
+        {
+            GenericSkill passiveGenericSkill = Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, "Passive");
+
+            PassiveItemSkillDef metro = SynthSkillDefs.Passive_Metro();
+            PassiveItemSkillDef another = SynthSkillDefs.Passive_Another();
+            Skills.AddSkillsToFamily(passiveGenericSkill.skillFamily, metro, another);
+        }
+
+        private void AddPrimarySkills()
+        {
+            Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Primary);
+
+            SkillDef tnm = SynthSkillDefs.Primary_ThirtyNineMusic();
+            Skills.AddPrimarySkills(bodyPrefab, tnm);
+        }
+
+        private void AddSecondarySkills()
+        {
+            Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Secondary);
+
+            SkillDef diva = SynthSkillDefs.Secondary_DeployDiva();
+            Skills.AddSecondarySkills(bodyPrefab, diva);
+        }
+
+        private void AddUtilitySkills()
+        {
+            Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Utility);
+
+            SkillDef rollingGirl = SynthSkillDefs.Utility_RollingGirl();
+            SkillDef pumpedUp = SynthSkillDefs.Utility_PumpedUp();
+            Skills.AddUtilitySkills(bodyPrefab, rollingGirl, pumpedUp);
+        }
+
+        private void AddSpecialSkills()
+        {
+            Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Special);
+
+            SkillDef mikuBeam = SynthSkillDefs.Special_MikuBeam();
+            Skills.AddSpecialSkills(bodyPrefab, mikuBeam);
+        }
+        #endregion skills
+
+        #region skins
+        public override void InitializeSkins()
+        {
+            ModelSkinController skinController = prefabCharacterModel.gameObject.AddComponent<ModelSkinController>();
+            ChildLocator childLocator = prefabCharacterModel.GetComponent<ChildLocator>();
+
+            CharacterModel.RendererInfo[] defaultRendererinfos = prefabCharacterModel.baseRendererInfos;
+
+            List<SkinDef> skins = new List<SkinDef>();
+
+            #region DefaultSkin
+            //this creates a SkinDef with all default fields
+            SkinDef defaultSkin = Skins.CreateSkinDef("DEFAULT_SKIN",
+                assetBundle.LoadAsset<Sprite>("texMainSkin"),
+                defaultRendererinfos,
+                prefabCharacterModel.gameObject);
+
+            //these are your Mesh Replacements. The order here is based on your CustomRendererInfos from earlier
+            //pass in meshes as they are named in your assetbundle
+            //currently not needed as with only 1 skin they will simply take the default meshes
+            //uncomment this when you have another skin
+            //defaultSkin.meshReplacements = Modules.Skins.getMeshReplacements(assetBundle, defaultRendererinfos,
+            //    "meshHenrySword",
+            //    "meshHenryGun",
+            //    "meshHenry");
+
+            //add new skindef to our list of skindefs. this is what we'll be passing to the SkinController
+            skins.Add(defaultSkin);
+            #endregion
+
+            //uncomment this when you have a mastery skin
+            #region MasterySkin
+
+            ////creating a new skindef as we did before
+            //SkinDef masterySkin = Modules.Skins.CreateSkinDef(SYNTH_PREFIX + "MASTERY_SKIN_NAME",
+            //    assetBundle.LoadAsset<Sprite>("texMasteryAchievement"),
+            //    defaultRendererinfos,
+            //    prefabCharacterModel.gameObject,
+            //    HenryUnlockables.masterySkinUnlockableDef);
+
+            ////adding the mesh replacements as above. 
+            ////if you don't want to replace the mesh (for example, you only want to replace the material), pass in null so the order is preserved
+            //masterySkin.meshReplacements = Modules.Skins.getMeshReplacements(assetBundle, defaultRendererinfos,
+            //    "meshHenrySwordAlt",
+            //    null,//no gun mesh replacement. use same gun mesh
+            //    "meshHenryAlt");
+
+            ////masterySkin has a new set of RendererInfos (based on default rendererinfos)
+            ////you can simply access the RendererInfos' materials and set them to the new materials for your skin.
+            //masterySkin.rendererInfos[0].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
+            //masterySkin.rendererInfos[1].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
+            //masterySkin.rendererInfos[2].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
+
+            ////here's a barebones example of using gameobjectactivations that could probably be streamlined or rewritten entirely, truthfully, but it works
+            //masterySkin.gameObjectActivations = new SkinDef.GameObjectActivation[]
+            //{
+            //    new SkinDef.GameObjectActivation
+            //    {
+            //        gameObject = childLocator.FindChildGameObject("GunModel"),
+            //        shouldActivate = false,
+            //    }
+            //};
+            ////simply find an object on your child locator you want to activate/deactivate and set if you want to activate/deactivate it with this skin
+
+            //skins.Add(masterySkin);
+
+            #endregion
+
+            skinController.skins = [.. skins];
+        }
+        #endregion skins
+
+        //Character Master is what governs the AI of your character when it is not controlled by a player (artifact of vengeance, goobo)
+        public override void InitializeCharacterMaster()
+        {
+            //you must only do one of these. adding duplicate masters breaks the game.
+
+            //if you're lazy or prototyping you can simply copy the AI of a different character to be used
+            Modules.Prefabs.CloneDopplegangerMaster(bodyPrefab, masterName, "Merc");
+
+            //how to set up AI in code
+            //SynthAI.Init(bodyPrefab, masterName);
+
+            //how to load a master set up in unity, can be an empty gameobject with just AISkillDriver components
+            //assetBundle.LoadMaster(bodyPrefab, masterName);
+        }
+    }
+}
